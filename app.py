@@ -14,12 +14,13 @@ app = Flask(__name__)
 
 # Google Calendar configuration
 SERVICE_ACCOUNT_FILE = 'credentials.json'
+REDIRECT_URI = "https://calender-quf5.onrender.com/"
 CALENDAR_ID = 'primary'  # Use 'primary' for the primary calendar
 
 # Load Google credentials
 try:
     credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/calendar'])
+        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/calendar'], redirect_uri=REDIRECT_URI)
     service = build('calendar', 'v3', credentials=credentials)
 except FileNotFoundError:
     print("Service account credentials file not found. Make sure to create one.")
