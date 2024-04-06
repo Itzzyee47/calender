@@ -22,7 +22,7 @@ def index():
     if request.method == "POST":
         try:
             import argparse
-            flags = argparse.ArgumentParse(parents=[tools.argparse]).parse_args()
+            flags = argparse.ArgumentParser(parents=[tools.argparse]).parse_args()
         except ImportError:
             flags = None
         SCOPES = ['https://www.googleapis.com/auth/calendar']
