@@ -5,7 +5,7 @@ import pickle
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -55,6 +55,8 @@ def index():
     return render_template('index.html')
 
 SCOPES = ['https://www.googleapis.com/auth/calendar']
+REDIRECT_URI = "https://calender-quf5.onrender.com/"
+
 
 """Shows basic usage of the Google Calendar API.
 Prints the start and name of the next 10 events on the user's calendar.
@@ -72,11 +74,17 @@ def getService():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file("credentials.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+            flow = Flow.from_client_secrets_file("credentials.json", SCOPES,redirect_uri=REDIRECT_URI)
+            # Generate the authorization URL
+            authorization_url, state = flow.authorization_url(access_type='offline',
+                                                              include_granted_scopes='true')
+            # creds = flow.run_local_server(port=0)
+            return redirect(authorization_url)
+            
             
     # Save the credentials for the next run
         with open(token_file, "wb") as token:
+            creds = flow.fetch_token(authorization_response=request.url)
             pickle.dump(creds, token)
             
         
