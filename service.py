@@ -28,10 +28,8 @@ def serv():
       else:
         flow = InstalledAppFlow.from_client_secrets_file(
             "credentials.json", SCOPES,
-            launch_browser=True,
-            browser=browser,
         )
-        creds = flow.run_local_server(port=0)
+        creds = flow.run_local_server(port=0,open_browser=True,)
       # Save the credentials for the next run
       with open("token.json", "w") as token:
         token.write(creds.to_json())
