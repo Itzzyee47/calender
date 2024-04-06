@@ -28,7 +28,7 @@ def serv():
       else:
         flow = InstalledAppFlow.from_client_secrets_file(
             "credentials.json", SCOPES,
-            lauch_browser=True,
+            launch_browser=True,
             browser=browser,
         )
         creds = flow.run_local_server(port=0)
