@@ -1,4 +1,5 @@
 from flask import Flask,redirect,flash,render_template,request,url_for
+from httplib2 import Http
 import datetime
 import os.path
 import pickle
@@ -9,52 +10,65 @@ from google.oauth2 import service_account
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from oauth2client import file, client, tools
 
 app = Flask(__name__)
 
-# Google Calendar configuration
-SERVICE_ACCOUNT_FILE = 'credentials.json'
-REDIRECT_URI = "https://calender-quf5.onrender.com/"
-CALENDAR_ID = 'primary'  # Use 'primary' for the primary calendar
 
-# Load Google credentials
-try:
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_FILE, scopes=['https://www.googleapis.com/auth/calendar'], redirect_uri=REDIRECT_URI)
-    service = build('calendar', 'v3', credentials=credentials)
-except FileNotFoundError:
-    print("Service account credentials file not found. Make sure to create one.")
 
-# Function to create a weekly event
-def create_weekly_event(summary, description, start_time):
-    event = {
-        'summary': summary,
-        'description': description,
-        'start': {
-            'dateTime': start_time.strftime('%Y-%m-%dT%H:%M:%S'),
-            'timeZone': 'UTC',
-        },
-        'end': {
-            'dateTime': (start_time + datetime.timedelta(hours=1)).strftime('%Y-%m-%dT%H:%M:%S'),
-            'timeZone': 'UTC',
-        },
-        'recurrence': ['RRULE:FREQ=WEEKLY;COUNT=10'],  # Repeat weekly for 10 occurrences
-    }
-    event = service.events().insert(calendarId=CALENDAR_ID, body=event).execute()
-    return event['id']
-
-@app.route("/")
+@app.route('/', methods=["POST"])
 def index():
-    start_time = datetime.datetime.utcnow() + datetime.timedelta(days=1)  # Start meeting tomorrow
-    summary = "Weekly Meeting by zyee"
-    description = "This is a weekly meeting reminder."
-    event_id = create_weekly_event(summary, description, start_time)
-    return f"Meeting created! Event ID: {event_id}"
 
+    if request.method == "POST":
+        try:
+            import argparse
+            flags = argparse.ArgumentParse(parents=[tools.argparse]).parse_args()
+        except ImportError:
+            flags = None
+        SCOPES = ['https://www.googleapis.com/auth/calendar']
+        store = file.Storage('storage.json')
+        creds = store.get()
+        if not creds or creds.invalid:
+            flow = client.flow_from_clientsecrets('credentials.json', SCOPES)
+            creds = tools.run_flow(flow, store, flags) \
+                    if flags else tools.run(flow, store)
+        CAL = build('calendar', 'v3', http=creds.authorize(Http()))
+        event = {
+            'summary': 'Google Calendar API trys',
+            'location': '800 Howard St., San Francisco, CA 94103',
+            'description': 'A reminder of the test use of googles calender api.',
+            'start': {
+                'dateTime': '2015-05-28T09:00:00-07:00',
+                'timeZone': 'America/Los_Angeles',
+            },
+            'end': {
+                'dateTime': '2015-05-28T17:00:00-07:00',
+                'timeZone': 'America/Los_Angeles',
+            },
+            'recurrence': [
+                'RRULE:FREQ=DAILY;COUNT=2'
+            ],
+            'attendees': [
+                {'email': 'ebongloveis@gmail.com'},
+                {'email': 'joeltabe3@gmail.com'},
+            ],
+            'reminders': {
+                'useDefault': False,
+                'overrides': [
+                {'method': 'email', 'minutes': 24 * 60},
+                {'method': 'popup', 'minutes': 10},
+                ],
+            },
+            }
 
-
-# @app.route('/', methods=["POST","GET"])
-# def index():
+        e = CAL.events().insert(calendarId='primary', sendNotifications=True, body=event).execute()
+        if e:
+            context = {"link":event.get('htmlLink')}
+            return render_template('index.html',context)
+        
+        REDIRECT_URI = "https://calender-quf5.onrender.com/"
+        
+    return render_template('index.html')
     
 #     if request.method == "POST":
 #         try:
