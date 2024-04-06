@@ -11,7 +11,7 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from oauth2client import file, client, tools
-from service import service
+from service import serv
 
 app = Flask(__name__)
 
@@ -21,7 +21,7 @@ app = Flask(__name__)
 def index():
 
     if request.method == "POST":
-        service()
+        serv()
         # try:
         #     import argparse
         #     flags = argparse.ArgumentParser().parse_args()
